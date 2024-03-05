@@ -1,0 +1,11 @@
+.submit-box {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1rem;
+}
+
+.submit-container {
+    display: flex;
+    align-items: center;
+}

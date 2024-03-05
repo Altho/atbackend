@@ -1,0 +1,116 @@
+﻿@page "/newpost"
+@using Markdig
+@using atbackend.Data
+@using atbackend.Models
+@inject ApplicationDbContext dbContext
+@rendermode InteractiveServer
+
+
+<PageTitle>Posts</PageTitle>
+
+
+<Snackbar Color="SnackbarColor.Success" @ref="successBar">
+  <SnackbarBody>
+    Post <b>@title</b> successfully submitted
+  </SnackbarBody>
+</Snackbar>
+
+
+<Snackbar Color="SnackbarColor.Danger" @ref="errorBar">
+  <SnackbarBody>
+    An error occurred while submitting post <b>@title</b>
+  </SnackbarBody>
+</Snackbar>
+
+<Field>
+
+
+  <FieldLabel>Title</FieldLabel>
+  <TextEdit TextChanged="@OnTitleChanged" Placeholder="Title"/>
+
+  <FieldLabel >Description</FieldLabel>
+  <MemoEdit TextChanged="@OnDescriptionChanged" Rows="5"/>
+
+
+  <Markdown Value="@markdownValue" ValueChanged="@OnMarkdownValueChanged"/>
+
+  <textarea>@description</textarea>
+
+  <div class="submit-container">
+    <div class="submit-box">
+      <Switch Style="margin: 10px" bind-Checked="@published" TValue="bool">Published</Switch>
+      <Button Color="Color.Primary" Clicked="@SubmitPost" Loading="@isLoading">Submit</Button>
+    </div>
+  </div>
+
+
+</Field>
+
+@code{
+  private bool isLoading = false;
+  string? markdownValue = "# EasyMDE \n Go ahead, play around with the editor! Be sure to check out **bold**, *italic*, [links](https://google.com) and all the other features. You can type the Markdown syntax, use the toolbar, or use shortcuts like `ctrl-b` or `cmd-b`.";
+  string? markdownHtml;
+  string? title = "";
+  string? description = "";
+  bool published = false;
+
+  private Snackbar? successBar;
+  private Snackbar? errorBar;
+
+  protected override void OnInitialized()
+  {
+    markdownHtml = Markdig.Markdown.ToHtml(markdownValue ?? string.Empty);
+
+    base.OnInitialized();
+  }
+
+  Task OnTitleChanged(string value)
+  {
+    title = value;
+
+    return Task.CompletedTask;
+  }
+
+  Task OnDescriptionChanged(string value)
+  {
+    description = value;
+
+    return Task.CompletedTask;
+  }
+
+  Task OnMarkdownValueChanged(string value)
+  {
+    markdownValue = value;
+
+    markdownHtml = Markdig.Markdown.ToHtml(markdownValue ?? string.Empty);
+
+    return Task.CompletedTask;
+  }
+
+  private async Task SubmitPost()
+  {
+    isLoading = true;
+    var post = new Post
+    {
+      Title = title,
+      Description = description,
+      Published = published,
+      Content = markdownValue
+    };
+
+    try
+    {
+      dbContext.Posts.Add(post);
+      await dbContext.SaveChangesAsync();
+      isLoading = false;
+      await successBar.Show();
+    }
+    catch (Exception e)
+    {
+      Console.WriteLine(e);
+      isLoading = false;
+      await errorBar.Show();
+    }
+  }
+
+}

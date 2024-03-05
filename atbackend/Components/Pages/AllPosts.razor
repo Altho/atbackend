@@ -1,0 +1,32 @@
+@page "/AllPosts"
+@using atbackend.Models
+@using atbackend.Data
+@using Microsoft.EntityFrameworkCore
+@rendermode InteractiveServer
+@inject ApplicationDbContext dbContext
+
+<h3>AllPosts</h3>
+
+<DataGrid TItem="Post"
+          Data="@posts"
+          TotalItems="@totalPosts"
+          PageSize="1"
+          ShowPager
+          Responsive>
+  <DataGridCommandColumn/>
+  <DataGridColumn Field="@nameof(Post.Title)" Caption="Title" Sortable="false"/>
+  <DataGridColumn Field="@nameof(Post.Published)" Caption="Published" Editable/>
+  <DataGridColumn Field="@nameof(Post.UpdatedAt)" Caption="Last Update" Editable/>
+</DataGrid>
+
+@code {
+  private List<Post> posts;
+  private int totalPosts;
+
+  protected override async Task OnInitializedAsync()
+  {
+    posts = await dbContext.Posts.ToListAsync();
+    totalPosts = posts.Count;
+  }
+
+}
