@@ -1,0 +1,63 @@
+@page "/Categories"
+@using atbackend.Models
+@using atbackend.Data
+@rendermode InteractiveAuto
+@inject ApplicationDbContext dbContext
+
+<h3>Categories</h3>
+
+<Snackbar Color="SnackbarColor.Success" @ref="successBar">
+  <SnackbarBody>
+    Category <b>@name</b> successfully created
+  </SnackbarBody>
+</Snackbar>
+
+
+<Snackbar Color="SnackbarColor.Danger" @ref="errorBar">
+  <SnackbarBody>
+    An error occurred while creating category <b>@name</b>
+  </SnackbarBody>
+</Snackbar>
+
+<TextEdit @bind-Text="@name" />
+<MemoEdit @bind-Text="@description"/>
+<ColorPicker @bind-Color="@colorValue" ShowHueSlider />
+
+      <Button Color="Color.Primary" Clicked="@Submit" Loading="@isLoading">Create</Button>
+
+
+@code {
+  string name;
+  string description;
+  string colorValue = "#ff0000";
+  private bool isLoading;
+  private Snackbar? successBar;
+  private Snackbar? errorBar;
+  
+  private async Task Submit()
+  {
+    isLoading = true;
+    var category = new Category
+    {
+      Name = name,
+      Description = description,
+      Color = colorValue,
+    };
+
+    try
+    {
+      dbContext.Categories.Add(category);
+      await dbContext.SaveChangesAsync();
+      isLoading = false;
+      await successBar.Show();
+    }
+    catch (Exception e)
+    {
+      Console.WriteLine(e);
+      isLoading = false;
+      await errorBar.Show();
+    }
+  }
+  
+  
+}

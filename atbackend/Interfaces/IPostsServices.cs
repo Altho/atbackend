@@ -1,6 +1,8 @@
+using atbackend.Models;
+
 namespace atbackend.Interfaces;
 
 public interface IPostsServices
 {
-  Task<string> GetPosts();
+  Task<List<Post>> GetPosts();
 }

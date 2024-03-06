@@ -1,4 +1,5 @@
 using atbackend.Interfaces;
+using atbackend.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace atbackend.Controllers;
@@ -16,7 +17,7 @@ public class PostsController : ControllerBase
 
 
   [HttpGet("Woolooloo")]
-  public async Task<string> GetPosts()
+  public async Task<List<Post>> GetPosts()
   {
     Console.WriteLine("Hello");
     return await _postsServices.GetPosts();

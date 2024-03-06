@@ -6,9 +6,12 @@
 @rendermode InteractiveServer
 
 
+
 <PageTitle>Posts</PageTitle>
 
+<input @bind-Text="title" />
 
+@*
 <Snackbar Color="SnackbarColor.Success" @ref="successBar">
   <SnackbarBody>
     Post <b>@title</b> successfully submitted
@@ -44,7 +47,9 @@
   </div>
 
 
-</Field>
+</Field> 
+*@
+
 
 @code{
   private bool isLoading = false;

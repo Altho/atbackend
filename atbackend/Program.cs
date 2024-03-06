@@ -18,6 +18,11 @@ builder.Services.AddRazorComponents()
   .AddInteractiveServerComponents()
   .AddInteractiveWebAssemblyComponents();
 
+builder.Services
+  .AddBlazorise(options => { options.Immediate = true; })
+  .AddBootstrapProviders()
+  .AddFontAwesomeIcons();
+
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<IdentityUserAccessor>();
 builder.Services.AddScoped<IdentityRedirectManager>();
@@ -30,6 +35,12 @@ builder.Services.AddAuthentication(options =>
   })
   .AddIdentityCookies();
 
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ??
+                       throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+  options.UseNpgsql(connectionString));
+builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+
 builder.Services.AddCors(options =>
 {
   options.AddPolicy("CorsPolicy",
@@ -41,24 +52,18 @@ builder.Services.AddCors(options =>
 });
 
 
-builder.Services
-  .AddBlazorise(options => { options.Immediate = true; })
-  .AddBootstrapProviders()
-  .AddFontAwesomeIcons();
+
 builder.Services.AddControllers();
 
 builder.Services.AddScoped<IPostsServices, PostsService>();
+builder.Services.AddScoped<ICategoriesServices, CategoriesService>();
 
 builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddSwaggerGen();
 
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ??
-                       throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-  options.UseNpgsql(connectionString));
-builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+
 
 builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
   .AddEntityFrameworkStores<ApplicationDbContext>()
