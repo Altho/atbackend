@@ -1,0 +1,26 @@
+.pill {
+    padding: 0.5rem;
+    border-radius: 5px;
+    width: 100%;
+}
+
+.badge {
+    padding: 0.5rem;
+    border-radius: 5px;
+    font-size: 0.8rem;
+    color: white;
+    box-shadow: rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.06) 0px 1px 2px 0px;
+}
+.published {
+    background-color: #77DD77;
+    color: white;
+    font-size: 0.8rem;
+    margin-top: 0.5rem;
+}
+
+.unpublished {
+    background-color: #FF6961;
+    color: white;
+    font-size: 0.8rem;
+    margin-top: 0.5rem;
+}

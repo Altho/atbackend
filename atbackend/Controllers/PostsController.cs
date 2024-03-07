@@ -16,10 +16,12 @@ public class PostsController : ControllerBase
   }
 
 
-  [HttpGet("Woolooloo")]
+  [HttpGet("GetAllPosts")]
   public async Task<List<Post>> GetPosts()
   {
     Console.WriteLine("Hello");
     return await _postsServices.GetPosts();
   }
+  
+  
 }

@@ -1,3 +1,4 @@
+using atbackend.Client.Pages;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -35,8 +36,7 @@ builder.Services.AddAuthentication(options =>
   })
   .AddIdentityCookies();
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ??
-                       throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
   options.UseNpgsql(connectionString));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
@@ -52,6 +52,10 @@ builder.Services.AddCors(options =>
 });
 
 
+builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
+  .AddEntityFrameworkStores<ApplicationDbContext>()
+  .AddSignInManager()
+  .AddDefaultTokenProviders();
 
 builder.Services.AddControllers();
 
@@ -65,10 +69,6 @@ builder.Services.AddSwaggerGen();
 
 
 
-builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
-  .AddEntityFrameworkStores<ApplicationDbContext>()
-  .AddSignInManager()
-  .AddDefaultTokenProviders();
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 
@@ -102,7 +102,7 @@ app.UseAntiforgery();
 app.MapRazorComponents<App>()
   .AddInteractiveServerRenderMode()
   .AddInteractiveWebAssemblyRenderMode()
-  .AddAdditionalAssemblies(typeof(atbackend.Client._Imports).Assembly);
+  .AddAdditionalAssemblies(typeof(Counter).Assembly);
 
 // Add additional endpoints required by the Identity /Account Razor components.
 app.MapAdditionalIdentityEndpoints();

@@ -2,6 +2,7 @@
 @using Markdig
 @using atbackend.Data
 @using atbackend.Models
+@using Microsoft.EntityFrameworkCore
 @inject ApplicationDbContext dbContext
 @rendermode InteractiveServer
 
@@ -9,9 +10,29 @@
 
 <PageTitle>Posts</PageTitle>
 
-<input @bind-Text="title" />
+<Modal @ref="modalRef">
+  <ModalContent Centered>
+    <ModalHeader>
+      <ModalTitle>Add Category</ModalTitle>
+      <CloseButton />
+    </ModalHeader>
+    <ModalBody>
+      <div class="cat-infos">
+      <TextEdit @bind-Text="@catName"/>
+      <ColorPicker Style="width: 50px" @bind-Color="@colorValue" ShowHueSlider/>
+      </div>
+      <MemoEdit @bind-Text="@catDescription"/>
 
-@*
+
+      <ModalFooter>
+        <Button Color="Color.Secondary" Clicked="@HideModal">Close</Button>
+        <Button Color="Color.Primary" Clicked="@SubmitCategory">Save Changes</Button>
+      </ModalFooter>
+    </ModalBody>
+  </ModalContent>
+</Modal>
+
+
 <Snackbar Color="SnackbarColor.Success" @ref="successBar">
   <SnackbarBody>
     Post <b>@title</b> successfully submitted
@@ -25,42 +46,88 @@
   </SnackbarBody>
 </Snackbar>
 
-<Field>
+<Snackbar Color="SnackbarColor.Success" @ref="catSuccessBar">
+  <SnackbarBody>
+    Category <b>@catName</b> successfully created
+  </SnackbarBody>
+</Snackbar>
 
+
+<Snackbar Color="SnackbarColor.Danger" @ref="catErrorBar">
+  <SnackbarBody>
+    An error occurred while creating category <b>@catName</b>
+  </SnackbarBody>
+</Snackbar>
+
+<section>
+<div class="content">
 
   <FieldLabel>Title</FieldLabel>
-  <TextEdit TextChanged="@OnTitleChanged" Placeholder="Title"/>
+  <TextEdit @bind-Text="@title" Placeholder="Title" Disabled="isLoading"/>
+  
+  
+  
+  
+
+  
+  <div class="category-container">
+  @if(categories == null)
+  {
+      <p>Categories is null</p>
+  }
+  else
+  {
+    <Select TValue="string" @bind-SelectedValue="@selectedCategory">
+      <SelectItem TValue="string" Value="null">Select Category</SelectItem>
+      @foreach (var category in categories)
+      {
+        if (category != null)
+        {
+          <SelectItem TValue="string" Value="@category.Name">@category.Name</SelectItem>
+        }
+      }
+    </Select>
+    
+  }
+  <Button Color="Color.Primary" Clicked="@ShowModal"><Icon Name="IconName.PlusCircle" /></Button>
+  </div>
 
   <FieldLabel >Description</FieldLabel>
-  <MemoEdit TextChanged="@OnDescriptionChanged" Rows="5"/>
-
+  <MemoEdit @bind-Text="@description" Rows="5" Disabled="isLoading"/>
 
   <Markdown Value="@markdownValue" ValueChanged="@OnMarkdownValueChanged"/>
 
-  <textarea>@description</textarea>
-
   <div class="submit-container">
     <div class="submit-box">
-      <Switch Style="margin: 10px" bind-Checked="@published" TValue="bool">Published</Switch>
+      <Switch Style="margin: 10px" @bind-Checked="@published" TValue="bool">Published</Switch>
       <Button Color="Color.Primary" Clicked="@SubmitPost" Loading="@isLoading">Submit</Button>
     </div>
   </div>
 
+</div>
+</section>
 
-</Field> 
-*@
+
 
 
 @code{
   private bool isLoading = false;
-  string? markdownValue = "# EasyMDE \n Go ahead, play around with the editor! Be sure to check out **bold**, *italic*, [links](https://google.com) and all the other features. You can type the Markdown syntax, use the toolbar, or use shortcuts like `ctrl-b` or `cmd-b`.";
+  string? markdownValue = "";
   string? markdownHtml;
   string? title = "";
   string? description = "";
-  bool published = false;
+  bool published;
+  string selectedCategory;
+  string catName;
+  string catDescription;
+  string colorValue = "#ff0000";
 
   private Snackbar? successBar;
   private Snackbar? errorBar;
+  private Snackbar? catSuccessBar;
+  private Snackbar? catErrorBar;
+  
+  private List<Category> categories;
 
   protected override void OnInitialized()
   {
@@ -68,19 +135,10 @@
 
     base.OnInitialized();
   }
-
-  Task OnTitleChanged(string value)
+  
+  Task<List<Category>> GetCategories()
   {
-    title = value;
-
-    return Task.CompletedTask;
-  }
-
-  Task OnDescriptionChanged(string value)
-  {
-    description = value;
-
-    return Task.CompletedTask;
+    return dbContext.Categories.ToListAsync();
   }
 
   Task OnMarkdownValueChanged(string value)
@@ -91,6 +149,12 @@
 
     return Task.CompletedTask;
   }
+  
+  protected override async Task OnInitializedAsync()
+  {
+    categories = await GetCategories() ?? new List<Category>();
+    
+  }
 
   private async Task SubmitPost()
   {
@@ -100,7 +164,8 @@
       Title = title,
       Description = description,
       Published = published,
-      Content = markdownValue
+      Content = markdownValue,
+      Category = selectedCategory
     };
 
     try
@@ -109,6 +174,10 @@
       await dbContext.SaveChangesAsync();
       isLoading = false;
       await successBar.Show();
+      title = "";
+      description = "";
+      published = false;
+      markdownValue = "";
     }
     catch (Exception e)
     {
@@ -117,5 +186,50 @@
       await errorBar.Show();
     }
   }
+  
+  private Modal modalRef;
+
+  private Task ShowModal()
+  {
+    return modalRef.Show();
+  }
+
+  private Task HideModal()
+  {
+    return modalRef.Hide();
+  }
+  
+
+  
+  private async Task SubmitCategory()
+  {
+    isLoading = true;
+    var category = new Category
+    {
+      Name = catName,
+      Description = catDescription,
+      Color = colorValue,
+    };
+
+    try
+    {
+      dbContext.Categories.Add(category);
+      await dbContext.SaveChangesAsync();
+      isLoading = false;
+      await catSuccessBar.Show();
+      catName = "";
+      catDescription = "";
+      colorValue = "#ff0000";
+      categories = await GetCategories();
+      await HideModal();
+    }
+    catch (Exception e)
+    {
+      Console.WriteLine(e);
+      isLoading = false;
+      await catErrorBar.Show();
+    }
+  }
+
 
 }

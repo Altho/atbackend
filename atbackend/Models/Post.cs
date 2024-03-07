@@ -10,6 +10,7 @@ public class Post
   public bool Published { get; set; }
   public string? Description { get; set; }
   public string? Content { get; set; }
+  public string? Category { get; set; }
   public DateTime CreatedAt { get; init; } = DateTime.UtcNow;
   public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 }

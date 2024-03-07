@@ -7,26 +7,177 @@
 
 <h3>AllPosts</h3>
 
+
+
+<Snackbar Color="SnackbarColor.Success" @ref="deleteSuccesBar">
+  <SnackbarBody>
+    Post successfully deleted
+  </SnackbarBody>
+</Snackbar>
+
+
+<Snackbar Color="SnackbarColor.Danger" @ref="deleteErrorBar">
+  <SnackbarBody>
+    An error occurred while submitting post <b>@deletedPost</b>
+  </SnackbarBody>
+</Snackbar>
+@if (selectedPost != null)
+{
+  <Modal @ref="modalRef">
+    @if (selectedPost != null)
+    {
+      <ModalContent Centered>
+        <ModalHeader>
+          <ModalTitle>Delete ?</ModalTitle>
+          <CloseButton/>
+        </ModalHeader>
+        <ModalBody>
+          <Alert Color="Color.Warning" Visible>
+            <AlertMessage>Are you sure you want to delete <i>@selectedPost.Title</i> ?</AlertMessage>
+            <AlertDescription>Deletion will be permanent.</AlertDescription>
+          </Alert>
+
+
+          <ModalFooter>
+            <Button Color="Color.Light" Clicked="@HideModal">Close</Button>
+            <Button Color="Color.Danger" Clicked="() => DeletePost(selectedPost.Id)">Save Changes</Button>
+          </ModalFooter>
+        </ModalBody>
+      </ModalContent>
+    }</Modal>
+   
+}
+
+
 <DataGrid TItem="Post"
           Data="@posts"
           TotalItems="@totalPosts"
-          PageSize="1"
+          PageSize="15"
           ShowPager
+          @bind-SelectedRow="@selectedPost"
+          Filterable
+          Hoverable
+          SortMode="DataGridSortMode.Multiple"
           Responsive>
-  <DataGridCommandColumn/>
-  <DataGridColumn Field="@nameof(Post.Title)" Caption="Title" Sortable="false"/>
-  <DataGridColumn Field="@nameof(Post.Published)" Caption="Published" Editable/>
-  <DataGridColumn Field="@nameof(Post.UpdatedAt)" Caption="Last Update" Editable/>
+  <DataGridColumns>
+    <DataGridColumn Field="@nameof(Post.Title)" Caption="Title"/>
+    <DataGridColumn TItem="Post" Caption="Category">
+                <DisplayTemplate>
+                    @{
+                        var post = (context as Post);
+                        if (post != null)
+                        {
+                          var categoryColor = categories.FirstOrDefault(c => c.Name == post.Category)?.Color ?? "white";
+                          <span class="badge" style="background-color: @categoryColor">@post.Category</span>
+                        }
+                    }
+                </DisplayTemplate>
+            </DataGridColumn>
+    <DataGridColumn TItem="Post" Caption="Published ?">
+            <DisplayTemplate>
+                @{
+                    var post = (context as Post);
+                    if (post != null)
+                    {
+                      if (post.Published == true)
+                      {
+                        <span class="pill published"><Icon Name="IconName.Check" /></span>
+                      }
+                      else
+                      {
+                        <span class="pill unpublished"><Icon Name="IconName.MinusCircle" /></span>
+                      }
+                    }
+                }
+            </DisplayTemplate>
+        </DataGridColumn>
+    <DataGridColumn TItem="Post" Caption="Created at">
+        <DisplayTemplate>
+            @{
+                var post = (context as Post);
+                if (post != null)
+                {
+                    <span>@post.CreatedAt.ToString("MMMM dd, yyyy")</span>
+                }
+            }
+        </DisplayTemplate>
+    </DataGridColumn>
+    <DataGridColumn Field="@nameof(Post.UpdatedAt)" Caption="Last Update" Editable/>
+  </DataGridColumns>
+  <ButtonRowTemplate>
+    <Button Color="Color.Danger" Disabled="@(selectedPost == null)" Clicked="@ShowModal">Delete</Button>
+    <Button Color="Color.Link" Clicked="context.ClearFilterCommand.Clicked">Clear Filter</Button>
+  </ButtonRowTemplate>
 </DataGrid>
 
 @code {
   private List<Post> posts;
+  private List<Category> categories;
   private int totalPosts;
+  private Modal modalRef;
+  private Snackbar? deleteSuccesBar;
+  private Snackbar? deleteErrorBar;
+  private string? deletedPost;
+  private string errorMessage = "";
+  private Post? selectedPost = null;
+
+  private Task ShowModal()
+  {
+    return modalRef.Show();
+  }
+
+  private Task HideModal()
+  {
+    return modalRef.Hide();
+  }
+  
+  private async Task<List<Post>> GetPosts()
+  {
+    return await dbContext.Posts.ToListAsync();
+    
+  }
 
   protected override async Task OnInitializedAsync()
   {
-    posts = await dbContext.Posts.ToListAsync();
+    posts = await GetPosts();
+    categories = await dbContext.Categories.ToListAsync();
     totalPosts = posts.Count;
+  }
+
+  private async Task<bool> DeletePost(Guid id)
+  {
+    var post = await dbContext.Posts.FindAsync(id);
+    if (post == null)
+    {
+      errorMessage = "Post not found";
+      posts = await GetPosts();
+      await deleteErrorBar.Show();
+      errorMessage = "";
+      return false;
+    }
+
+    try
+    {
+      dbContext.Posts.Remove(post);
+      await dbContext.SaveChangesAsync();
+    }
+    catch (Exception e)
+    {
+      deletedPost = post.Title;
+      errorMessage = $"An error occurred while deleting post {deletedPost} | {e.Message}";
+      await deleteErrorBar.Show();
+      posts = await GetPosts();
+      deletedPost = post.Title;
+      errorMessage = "";
+      return false;
+    }
+    posts = await GetPosts();
+    deletedPost = post.Title;
+    selectedPost = null;
+    totalPosts = posts.Count;
+    HideModal();
+    await deleteSuccesBar.Show();
+    return true;
   }
 
 }
