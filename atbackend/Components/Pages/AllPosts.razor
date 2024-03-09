@@ -1,6 +1,7 @@
 @page "/AllPosts"
 @using atbackend.Models
 @using atbackend.Data
+@using Humanizer
 @using Microsoft.EntityFrameworkCore
 @rendermode InteractiveServer
 @inject ApplicationDbContext dbContext
@@ -91,7 +92,7 @@
                 }
             </DisplayTemplate>
         </DataGridColumn>
-    <DataGridColumn TItem="Post" Caption="Created at">
+    <DataGridColumn TItem="Post" Caption="Created">
         <DisplayTemplate>
             @{
                 var post = (context as Post);
@@ -102,7 +103,19 @@
             }
         </DisplayTemplate>
     </DataGridColumn>
-    <DataGridColumn Field="@nameof(Post.UpdatedAt)" Caption="Last Update" Editable/>
+     <DataGridColumn TItem="Post" Caption="Updated">
+            <DisplayTemplate>
+                @{
+                    var post = (context as Post);
+                    long timestamp = ((DateTimeOffset)post.UpdatedAt).ToUnixTimeSeconds();
+                    var date = TimeSpan.FromMilliseconds(timestamp).Humanize();
+                    if (post != null)
+                    {
+                      <span><b>@date ago</b> (@post.UpdatedAt.ToString("MMMM dd, yyyy")</span>
+                    }
+                }
+            </DisplayTemplate>
+        </DataGridColumn>
   </DataGridColumns>
   <ButtonRowTemplate>
     <Button Color="Color.Danger" Disabled="@(selectedPost == null)" Clicked="@ShowModal">Delete</Button>
