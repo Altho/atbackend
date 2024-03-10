@@ -61,6 +61,7 @@ builder.Services.AddControllers();
 
 builder.Services.AddScoped<IPostsServices, PostsService>();
 builder.Services.AddScoped<ICategoriesServices, CategoriesService>();
+builder.Services.AddScoped<ICommentsService, CommentsService>();
 
 builder.Services.AddEndpointsApiExplorer();
 
