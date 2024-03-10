@@ -1,12 +1,13 @@
 @page "/EditPost"
 @using atbackend.Data
 @using atbackend.Models
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.CodeAnalysis.CSharp.Syntax
 @using Microsoft.EntityFrameworkCore
 @rendermode InteractiveServer
 @inject ApplicationDbContext dbContext
 @inject NavigationManager _nav
-
+@attribute [Authorize]
 <h3>EditPost</h3>
 
 

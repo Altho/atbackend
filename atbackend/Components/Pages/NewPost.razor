@@ -2,9 +2,12 @@
 @using Markdig
 @using atbackend.Data
 @using atbackend.Models
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
 @inject ApplicationDbContext dbContext
 @rendermode InteractiveServer
+@attribute [Authorize]
+
 
 
 

@@ -14,5 +14,5 @@ public class Post
   public string? Category { get; set; }
   public DateTime CreatedAt { get; init; } = DateTime.UtcNow;
   public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
-  public ICollection<Comment> Comments {get; set; }
+  public virtual List<Comment> Comments {get; set; }
 }

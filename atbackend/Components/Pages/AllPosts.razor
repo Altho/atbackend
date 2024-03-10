@@ -2,10 +2,13 @@
 @using atbackend.Models
 @using atbackend.Data
 @using Humanizer
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
 @rendermode InteractiveServer
 @inject ApplicationDbContext dbContext
 @inject NavigationManager _nav
+@attribute [Authorize]
+
 
 <h3>AllPosts</h3>
 
@@ -100,24 +103,35 @@
         }
       </DisplayTemplate>
     </DataGridColumn>
-      <DataGridColumn TItem="Post" Caption="Published ?">
-                <DisplayTemplate>
-                    @{
-                        var post = (context as Post);
-                        if (post != null)
-                        {
-                          if (post.Published == true)
-                          {
-                            <span class="pill published"><Icon Name="IconName.Check" /></span>
-                          }
-                          else
-                          {
-                            <span class="pill unpublished"><Icon Name="IconName.MinusCircle" /></span>
-                          }
+    <DataGridColumn TItem="Post" Caption="Published ?">
+      <DisplayTemplate>
+        @{
+          var post = (context as Post);
+          if (post != null)
+          {
+            if (post.Published == true)
+            {
+              <span class="pill published"><Icon Name="IconName.Check" /></span>
+            }
+            else
+            {
+              <span class="pill unpublished"><Icon Name="IconName.MinusCircle" /></span>
+            }
+          }
+        }
+      </DisplayTemplate>
+    </DataGridColumn>
+      <DataGridColumn TItem="Post" Caption="Comments">
+                    <DisplayTemplate>
+                        @{
+                            var post = (context as Post);
+                            if (post != null)
+                            {
+                              <p>@post.Comments.Count</p>
+                            }
                         }
-                    }
-                </DisplayTemplate>
-            </DataGridColumn>
+                    </DisplayTemplate>
+                </DataGridColumn>
   </DataGridColumns>
   <ButtonRowTemplate>
     <Button Color="Color.Danger" Disabled="@(selectedPost == null)" Clicked="@ShowModal">Delete</Button>
@@ -152,7 +166,7 @@
   
   private async Task<List<Post>> GetPosts()
   {
-    return await dbContext.Posts.ToListAsync();
+    return await dbContext.Posts.Include(c => c.Comments).ToListAsync();
     
   }
   
