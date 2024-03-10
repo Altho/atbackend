@@ -1,6 +1,8 @@
 .pill {
-    padding: 0.5rem;
-    border-radius: 5px;
+    padding: 0.3rem;
+    display: flex;
+    justify-content: center;
+    //border-radius: 5px;
     width: 100%;
 }
 
@@ -12,15 +14,15 @@
     box-shadow: rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.06) 0px 1px 2px 0px;
 }
 .published {
-    background-color: #77DD77;
+    background: linear-gradient(to right, #76b852, #8dc26f);;
     color: white;
-    font-size: 0.8rem;
-    margin-top: 0.5rem;
+    font-size: 1.6rem;
+    //margin-top: 0.5rem;
 }
 
 .unpublished {
-    background-color: #FF6961;
+    background: linear-gradient(to right, #d31027, #ea384d);
     color: white;
-    font-size: 0.8rem;
-    margin-top: 0.5rem;
+    font-size: 1.6rem;
+    //margin-top: 0.5rem;
 }

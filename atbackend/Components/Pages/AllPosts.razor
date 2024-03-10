@@ -5,6 +5,7 @@
 @using Microsoft.EntityFrameworkCore
 @rendermode InteractiveServer
 @inject ApplicationDbContext dbContext
+@inject NavigationManager _nav
 
 <h3>AllPosts</h3>
 
@@ -50,6 +51,7 @@
 }
 
 
+
 <DataGrid TItem="Post"
           Data="@posts"
           TotalItems="@totalPosts"
@@ -74,24 +76,6 @@
                     }
                 </DisplayTemplate>
             </DataGridColumn>
-    <DataGridColumn TItem="Post" Caption="Published ?">
-            <DisplayTemplate>
-                @{
-                    var post = (context as Post);
-                    if (post != null)
-                    {
-                      if (post.Published == true)
-                      {
-                        <span class="pill published"><Icon Name="IconName.Check" /></span>
-                      }
-                      else
-                      {
-                        <span class="pill unpublished"><Icon Name="IconName.MinusCircle" /></span>
-                      }
-                    }
-                }
-            </DisplayTemplate>
-        </DataGridColumn>
     <DataGridColumn TItem="Post" Caption="Created">
         <DisplayTemplate>
             @{
@@ -103,22 +87,42 @@
             }
         </DisplayTemplate>
     </DataGridColumn>
-     <DataGridColumn TItem="Post" Caption="Updated">
-            <DisplayTemplate>
-                @{
-                    var post = (context as Post);
-                    long timestamp = ((DateTimeOffset)post.UpdatedAt).ToUnixTimeSeconds();
-                    var date = TimeSpan.FromMilliseconds(timestamp).Humanize();
-                    if (post != null)
-                    {
-                      <span><b>@date ago</b> (@post.UpdatedAt.ToString("MMMM dd, yyyy")</span>
+    <DataGridColumn TItem="Post" Caption="Updated">
+      <DisplayTemplate>
+        @{
+          var post = (context as Post);
+          long timestamp = ((DateTimeOffset)post.UpdatedAt).ToUnixTimeSeconds();
+          var date = TimeSpan.FromMilliseconds(timestamp).Humanize();
+          if (post != null)
+          {
+            <span><b>@date ago</b> (@post.UpdatedAt.ToString("MMMM dd, yyyy")</span>
+          }
+        }
+      </DisplayTemplate>
+    </DataGridColumn>
+      <DataGridColumn TItem="Post" Caption="Published ?">
+                <DisplayTemplate>
+                    @{
+                        var post = (context as Post);
+                        if (post != null)
+                        {
+                          if (post.Published == true)
+                          {
+                            <span class="pill published"><Icon Name="IconName.Check" /></span>
+                          }
+                          else
+                          {
+                            <span class="pill unpublished"><Icon Name="IconName.MinusCircle" /></span>
+                          }
+                        }
                     }
-                }
-            </DisplayTemplate>
-        </DataGridColumn>
+                </DisplayTemplate>
+            </DataGridColumn>
   </DataGridColumns>
   <ButtonRowTemplate>
     <Button Color="Color.Danger" Disabled="@(selectedPost == null)" Clicked="@ShowModal">Delete</Button>
+    <Button Color="Color.Success" Clicked="@(()=>_nav.NavigateTo("/newpost"))">New</Button>
+    <Button Color="Color.Primary" Disabled="@(selectedPost == null)" Clicked="@(()=>_nav.NavigateTo("/editpost?id=" + selectedPost.Id))">Edit</Button>
     <Button Color="Color.Link" Clicked="context.ClearFilterCommand.Clicked">Clear Filter</Button>
   </ButtonRowTemplate>
 </DataGrid>
@@ -133,6 +137,8 @@
   private string? deletedPost;
   private string errorMessage = "";
   private Post? selectedPost = null;
+  private string? test;
+  
 
   private Task ShowModal()
   {
@@ -149,12 +155,20 @@
     return await dbContext.Posts.ToListAsync();
     
   }
+  
+  
+  
 
   protected override async Task OnInitializedAsync()
   {
     posts = await GetPosts();
     categories = await dbContext.Categories.ToListAsync();
     totalPosts = posts.Count;
+    var uri = _nav.ToAbsoluteUri(_nav.Uri);
+    var queryString = System.Web.HttpUtility.ParseQueryString(uri.Query);
+
+    // Example: Get the value of a query string parameter named "id"
+    test = queryString["test"];
   }
 
   private async Task<bool> DeletePost(Guid id)
