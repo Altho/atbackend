@@ -1,0 +1,86 @@
+@page "/Comments"
+@using atbackend.Models
+@using atbackend.Data
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@rendermode InteractiveServer
+@inject ApplicationDbContext dbContext
+<h3>Comments</h3>
+
+@if (oldComments != null && oldComments.Any())
+{
+  <div>
+    <h3>Old Comments</h3>
+    <ul>
+      @foreach (var comment in oldComments)
+      {
+        <li>
+          <div>
+            <strong>@comment.Author</strong>
+            <span>@comment.CreatedAt</span>
+          </div>
+          <p>@comment.Content</p>
+        </li>
+      }
+    </ul>
+  </div>
+}
+
+@if (newComments != null && newComments.Any())
+{
+    <div>
+        <h3>New Comments</h3>
+        <ul>
+            @foreach (var comment in newComments)
+            {
+                <li>
+                    <div>
+                        <strong>@comment.Author</strong>
+                        <span>@comment.CreatedAt</span>
+                    </div>
+                    <p>@comment.Content</p>
+                </li>
+            }
+        </ul>
+    </div>
+}
+
+@code {
+  List<Comment> comments;
+  private string? loggedInUserGuid;
+  ApplicationUser appUser;
+  List<Comment> oldComments;
+  List<Comment> newComments;
+
+  int totalComments;
+  DateTime lastSeenComments;
+  protected override async Task OnInitializedAsync()
+  {
+    var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+    comments = await dbContext.Comments.ToListAsync();
+    totalComments = comments.Count;
+    var user = authState.User;
+
+    if (user.Identity.IsAuthenticated)
+    {
+      loggedInUserGuid = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    }
+
+    appUser = await dbContext.Users.FindAsync(loggedInUserGuid);
+    lastSeenComments = appUser.LastSeenComments;
+
+    int timeBuffer = 5;
+    
+    var groupedComments = comments.GroupBy(c => (DateTime.UtcNow - c.CreatedAt).TotalSeconds > timeBuffer)
+      .ToDictionary(g => g.Key, g => g.ToList());
+
+    oldComments = groupedComments.GetValueOrDefault(true, new List<Comment>());
+    newComments = groupedComments.GetValueOrDefault(false, new List<Comment>());
+
+    appUser.LastSeenComments = DateTime.UtcNow;
+    dbContext.Users.Update(appUser);
+    await dbContext.SaveChangesAsync();
+
+  }
+}
